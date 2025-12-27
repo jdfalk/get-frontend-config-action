@@ -1,0 +1,29 @@
+# file: .github/workflows/branch-cleanup.yml
+# version: 1.0.0
+# guid: 3b4c5d6e-7f80-9123-abcd-ef3456789012
+
+name: Delete Branch After Merge
+
+on:
+  pull_request:
+    types: [ closed ]
+
+permissions:
+  contents: write
+
+jobs:
+  delete-branch:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete head branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          echo "Deleting ref: ${REF}"
+          gh api -X DELETE \
+            repos/${OWNER}/${REPO}/git/refs/heads/${REF} || echo "Branch delete skipped"

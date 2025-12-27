@@ -1,0 +1,48 @@
+# file: .github/workflows/test-action.yml
+# version: 1.0.0
+# guid: 2a3b4c5d-6e7f-8901-abcd-ef2345678901
+
+name: Test Action
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run-action:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Run Get Frontend Config (file)
+        id: frontend_file
+        uses: jdfalk/get-frontend-config-action@main
+        with:
+          repository-config: |
+            languages:
+              versions:
+                node: ["22"]
+              working_directories:
+                frontend: "web"
+      - name: Run Get Frontend Config (inline)
+        id: frontend_inline
+        uses: jdfalk/get-frontend-config-action@main
+        with:
+          repository-config: |
+            languages:
+              versions:
+                node: ["22"]
+              working_directories:
+                frontend: "web"
+      - name: Print outputs
+        run: |
+          echo "file.dir=${{ steps.frontend_file.outputs.dir }}"
+          echo "file.node=${{ steps.frontend_file.outputs.node-version }}"
+          echo "file.has=${{ steps.frontend_file.outputs.has-frontend }}"
+          echo "inline.dir=${{ steps.frontend_inline.outputs.dir }}"
+          echo "inline.node=${{ steps.frontend_inline.outputs.node-version }}"
+          echo "inline.has=${{ steps.frontend_inline.outputs.has-frontend }}"
