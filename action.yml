@@ -1,0 +1,77 @@
+# file: action.yml
+# version: 1.0.1
+# guid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+
+name: "Get Frontend Configuration"
+description: "Extracts frontend configuration from repository-config.yml"
+author: "jdfalk"
+
+branding:
+  icon: "folder"
+  color: "blue"
+
+inputs:
+  repository-config:
+    description: "Repository configuration YAML content (from repository-config.yml)"
+    required: true
+  config-file:
+    description: "Path to repository-config.yml file (alternative to repository-config input)"
+    required: false
+    default: ".github/repository-config.yml"
+
+outputs:
+  dir:
+    description: "Frontend working directory (e.g., web, frontend, client)"
+    value: ${{ steps.parse.outputs.dir }}
+  node-version:
+    description: "Node.js version from config"
+    value: ${{ steps.parse.outputs.node-version }}
+  has-frontend:
+    description: "Whether frontend configuration was found"
+    value: ${{ steps.parse.outputs.has-frontend }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Parse frontend configuration
+      id: parse
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        # Check if config content was provided directly
+        if [ -n "${{ inputs.repository-config }}" ]; then
+          CONFIG_CONTENT='${{ inputs.repository-config }}'
+        elif [ -f "${{ inputs.config-file }}" ]; then
+          CONFIG_CONTENT=$(cat "${{ inputs.config-file }}")
+        else
+          echo "::warning::No repository configuration found, using defaults"
+          echo "dir=web" >> "$GITHUB_OUTPUT"
+          echo "node-version=22" >> "$GITHUB_OUTPUT"
+          echo "has-frontend=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        # Extract frontend working directory (prefer 'frontend', fall back to 'node')
+        FRONTEND_DIR=$(echo "$CONFIG_CONTENT" | \
+          grep -A 5 "working_directories:" | \
+          grep -E "^\s+(frontend|node):" | \
+          head -n 1 | \
+          awk '{print $2}' | \
+          tr -d '"' || echo "web")
+
+        # Extract Node.js version
+        NODE_VERSION=$(echo "$CONFIG_CONTENT" | \
+          grep -A 5 "versions:" | \
+          grep "node:" | \
+          head -n 1 | \
+          sed 's/.*\[\(.*\)\].*/\1/' | \
+          tr -d '", ' || echo "22")
+
+        echo "dir=${FRONTEND_DIR}" >> "$GITHUB_OUTPUT"
+        echo "node-version=${NODE_VERSION}" >> "$GITHUB_OUTPUT"
+        echo "has-frontend=true" >> "$GITHUB_OUTPUT"
+
+        echo "✅ Frontend configuration extracted:"
+        echo "  - Working directory: ${FRONTEND_DIR}"
+        echo "  - Node.js version: ${NODE_VERSION}"
