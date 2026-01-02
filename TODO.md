@@ -1,5 +1,5 @@
 <!-- file: TODO.md -->
-<!-- version: 1.0.0 -->
+<!-- version: 1.0.2 -->
 <!-- guid: a1cd08e8-eaa7-4c64-bfc8-a3ae94cb44d8 -->
 
 # TODO - get-frontend-config-action
@@ -40,4 +40,8 @@ Retrieves frontend configuration for build and deployment workflows
 
 ---
 
-*This TODO.md was automatically generated on 2026-01-02*
+<!-- markdownlint-disable MD036 -->
+
+_This TODO.md was automatically generated on 2026-01-02_
+
+<!-- markdownlint-enable MD036 -->
