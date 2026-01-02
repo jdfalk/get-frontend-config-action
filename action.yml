@@ -2,36 +2,36 @@
 # version: 1.0.1
 # guid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
 
-name: "Get Frontend Configuration"
-description: "Extracts frontend configuration from repository-config.yml"
-author: "jdfalk"
+name: 'Get Frontend Configuration'
+description: 'Extracts frontend configuration from repository-config.yml'
+author: 'jdfalk'
 
 branding:
-  icon: "folder"
-  color: "blue"
+  icon: 'folder'
+  color: 'blue'
 
 inputs:
   repository-config:
-    description: "Repository configuration YAML content (from repository-config.yml)"
+    description: 'Repository configuration YAML content (from repository-config.yml)'
     required: true
   config-file:
-    description: "Path to repository-config.yml file (alternative to repository-config input)"
+    description: 'Path to repository-config.yml file (alternative to repository-config input)'
     required: false
-    default: ".github/repository-config.yml"
+    default: '.github/repository-config.yml'
 
 outputs:
   dir:
-    description: "Frontend working directory (e.g., web, frontend, client)"
+    description: 'Frontend working directory (e.g., web, frontend, client)'
     value: ${{ steps.parse.outputs.dir }}
   node-version:
-    description: "Node.js version from config"
+    description: 'Node.js version from config'
     value: ${{ steps.parse.outputs.node-version }}
   has-frontend:
-    description: "Whether frontend configuration was found"
+    description: 'Whether frontend configuration was found'
     value: ${{ steps.parse.outputs.has-frontend }}
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Parse frontend configuration
       id: parse

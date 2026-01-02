@@ -12,7 +12,7 @@ repos:
     rev: v6.0.0
     hooks:
       - id: check-added-large-files
-        args: ["--maxkb=1000"]
+        args: ['--maxkb=1000']
       - id: check-case-conflict
       - id: check-executables-have-shebangs
         exclude: '\.(md|json|yml|yaml|toml|txt|gitignore|js)$'
@@ -184,9 +184,9 @@ repos:
     rev: v0.14.3
     hooks:
       - id: ruff-check
-        args: [--config=.github/linters/ruff.toml, --fix]
+        args: [--config=ruff.toml, --fix]
       - id: ruff-format
-        args: [--config=.github/linters/ruff.toml]
+        args: [--config=ruff.toml]
 
   # Pyupgrade for modernizing Python code (Dict->dict, List->list, etc.)
   - repo: https://github.com/asottile/pyupgrade
@@ -211,8 +211,8 @@ repos:
         args: [--config=eslint.config.mjs, --fix]
         additional_dependencies:
           - eslint@^9.0.0
-          - "@typescript-eslint/eslint-plugin@^8.0.0"
-          - "@typescript-eslint/parser@^8.0.0"
+          - '@typescript-eslint/eslint-plugin@^8.0.0'
+          - '@typescript-eslint/parser@^8.0.0'
           - typescript-eslint@^8.0.0
           - globals@^15.0.0
 
@@ -245,7 +245,7 @@ repos:
     rev: v3.12.0-2
     hooks:
       - id: shfmt
-        args: [-w, -s, -i, "2"]
+        args: [-w, -s, -i, '2']
         exclude: '^(fix_instruction_frontmatter\.sh)$'
 
   # YAML formatting and linting
@@ -253,7 +253,7 @@ repos:
     rev: v1.37.1
     hooks:
       - id: yamllint
-        args: [--config-file=.yaml-lint.yml]
+        args: [--config-file=.yamllint]
 
   # Markdown formatting and linting
   - repo: https://github.com/igorshubovych/markdownlint-cli
@@ -297,8 +297,8 @@ ci:
 
     for more information, see https://pre-commit.ci
   autofix_prs: true
-  autoupdate_branch: ""
-  autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
   autoupdate_schedule: weekly
   skip: []
   submodules: false
