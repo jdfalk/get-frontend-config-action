@@ -14,7 +14,9 @@ and this project adheres to
 
 ### Added
 
-- Initial release of get-frontend-config-action
+- Dockerized execution path controlled by `use-docker`/`docker-image`
+- Automated GHCR publish workflow with digest pinning and tag bump
+- README now documents inputs/outputs and usage examples (host and docker)
 
 ### Changed
 

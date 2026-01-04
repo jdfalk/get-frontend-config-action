@@ -1,5 +1,5 @@
 # file: action.yml
-# version: 1.0.1
+# version: 1.1.0
 # guid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
 
 name: 'Get Frontend Configuration'
@@ -18,60 +18,68 @@ inputs:
     description: 'Path to repository-config.yml file (alternative to repository-config input)'
     required: false
     default: '.github/repository-config.yml'
+  use-docker:
+    description: 'Run inside the prebuilt Docker image'
+    required: false
+    default: 'false'
+  docker-image:
+    description: 'Docker image reference (tag or digest) to use when use-docker is true'
+    required: false
+    default: 'ghcr.io/jdfalk/get-frontend-config-action:main'
 
 outputs:
   dir:
     description: 'Frontend working directory (e.g., web, frontend, client)'
-    value: ${{ steps.parse.outputs.dir }}
+    value: ${{ steps.parse.outputs.dir || steps.parse-docker.outputs.dir }}
   node-version:
     description: 'Node.js version from config'
-    value: ${{ steps.parse.outputs.node-version }}
+    value: ${{ steps.parse.outputs.node-version || steps.parse-docker.outputs.node-version }}
   has-frontend:
     description: 'Whether frontend configuration was found'
-    value: ${{ steps.parse.outputs.has-frontend }}
+    value: ${{ steps.parse.outputs.has-frontend || steps.parse-docker.outputs.has-frontend }}
 
 runs:
   using: 'composite'
   steps:
-    - name: Parse frontend configuration
-      id: parse
+    - name: Parse frontend configuration (docker)
+      id: parse-docker
+      if: inputs.use-docker == 'true'
       shell: bash
+      env:
+        REPOSITORY_CONFIG: ${{ inputs.repository-config }}
+        CONFIG_FILE: ${{ inputs.config-file }}
+        DOCKER_IMAGE: ${{ inputs.docker-image }}
       run: |
         set -euo pipefail
 
-        # Check if config content was provided directly
-        if [ -n "${{ inputs.repository-config }}" ]; then
-          CONFIG_CONTENT='${{ inputs.repository-config }}'
-        elif [ -f "${{ inputs.config-file }}" ]; then
-          CONFIG_CONTENT=$(cat "${{ inputs.config-file }}")
-        else
-          echo "::warning::No repository configuration found, using defaults"
-          echo "dir=web" >> "$GITHUB_OUTPUT"
-          echo "node-version=22" >> "$GITHUB_OUTPUT"
-          echo "has-frontend=false" >> "$GITHUB_OUTPUT"
-          exit 0
+        if ! command -v docker >/dev/null 2>&1; then
+          echo "::error::Docker is required when use-docker is true."
+          exit 1
         fi
 
-        # Extract frontend working directory (prefer 'frontend', fall back to 'node')
-        FRONTEND_DIR=$(echo "$CONFIG_CONTENT" | \
-          grep -A 5 "working_directories:" | \
-          grep -E "^\s+(frontend|node):" | \
-          head -n 1 | \
-          awk '{print $2}' | \
-          tr -d '"' || echo "web")
+        touch "$GITHUB_OUTPUT" "$GITHUB_STEP_SUMMARY"
 
-        # Extract Node.js version
-        NODE_VERSION=$(echo "$CONFIG_CONTENT" | \
-          grep -A 5 "versions:" | \
-          grep "node:" | \
-          head -n 1 | \
-          sed 's/.*\[\(.*\)\].*/\1/' | \
-          tr -d '", ' || echo "22")
+        if ! docker pull "$DOCKER_IMAGE"; then
+          echo "::warning::Pull failed, building $DOCKER_IMAGE locally."
+          docker build --tag "$DOCKER_IMAGE" "${{ github.action_path }}"
+        fi
 
-        echo "dir=${FRONTEND_DIR}" >> "$GITHUB_OUTPUT"
-        echo "node-version=${NODE_VERSION}" >> "$GITHUB_OUTPUT"
-        echo "has-frontend=true" >> "$GITHUB_OUTPUT"
+        docker run --rm \
+          -e REPOSITORY_CONFIG \
+          -e CONFIG_FILE \
+          -e GITHUB_OUTPUT \
+          -e GITHUB_STEP_SUMMARY \
+          -v "$GITHUB_OUTPUT:$GITHUB_OUTPUT" \
+          -v "$GITHUB_STEP_SUMMARY:$GITHUB_STEP_SUMMARY" \
+          -v "${{ github.workspace }}:/repo" \
+          -w /repo \
+          "$DOCKER_IMAGE"
 
-        echo "✅ Frontend configuration extracted:"
-        echo "  - Working directory: ${FRONTEND_DIR}"
-        echo "  - Node.js version: ${NODE_VERSION}"
+    - name: Parse frontend configuration
+      id: parse
+      if: inputs.use-docker != 'true'
+      shell: bash
+      env:
+        REPOSITORY_CONFIG: ${{ inputs.repository-config }}
+        CONFIG_FILE: ${{ inputs.config-file }}
+      run: python "${{ github.action_path }}/src/get_frontend_config.py"
